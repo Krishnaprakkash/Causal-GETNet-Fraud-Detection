@@ -32,7 +32,7 @@ MODEL_CONFIG = {
 
     # Mini-batch size (512-4096)
     # Smaller = better gradients, less memory per step
-    "batch_size": 2048,
+    "batch_size": 4096,
 }
 
 
