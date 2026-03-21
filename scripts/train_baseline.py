@@ -25,7 +25,7 @@ from tqdm import tqdm
 
 # Import configuration from config.py
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import MODEL_CONFIG, ENTITY_TYPES
+from config import MODEL_CONFIG
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -44,6 +44,12 @@ NUM_HEADS = MODEL_CONFIG["num_heads"]
 DROPOUT = MODEL_CONFIG["dropout"]
 NUM_ENTITY_NODES = MODEL_CONFIG["num_entity_nodes"]
 BATCH_SIZE = MODEL_CONFIG["batch_size"]
+
+# Entity types (hardcoded - from build_graph.py ENTITY_COLS)
+ENTITY_TYPES = [
+    "card1", "card2", "card3", "card4", "card5", "card6",
+    "ProductCD", "P_emaildomain", "addr1", "addr2", "dist1",
+]
 
 # Training hyperparameters (hardcoded - no need to tweak)
 LEARNING_RATE = 5e-4

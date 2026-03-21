@@ -28,9 +28,9 @@ MODEL_CONFIG = {
 
     # Entity embedding bucket size (1000-100000)
     # Higher = less hash collisions but more memory
-    "num_entity_nodes": 50000,
+    "num_entity_nodes": 10000,
 
-    # Mini-batch size (512-8192)
+    # Mini-batch size (512-4096)
     # Smaller = better gradients, less memory per step
     "batch_size": 2048,
 }
