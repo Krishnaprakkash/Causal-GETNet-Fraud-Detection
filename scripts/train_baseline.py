@@ -7,9 +7,12 @@ with temporal train/validation split.
 
 Input:  PJT2/data/processed/hetero_graph_with_env.pt
 Output: PJT2/data/processed/best_model.pt
+
+Configuration: All parameters are in scripts/config.py
 """
 
 import os
+import sys
 import argparse
 import gc
 import numpy as np
@@ -19,6 +22,10 @@ import torch.nn.functional as F
 from torch_geometric.nn import TransformerConv, HeteroLinear
 from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
+
+# Import configuration from config.py
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from config import MODEL_CONFIG, ENTITY_TYPES
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -30,29 +37,21 @@ PROCESSED_DIR = os.path.join(DATA_DIR, "processed")
 GRAPH_PATH = os.path.join(PROCESSED_DIR, "hetero_graph_with_env.pt")
 MODEL_OUTPUT_PATH = os.path.join(PROCESSED_DIR, "best_model.pt")
 
-# Model hyperparameters (optimized for GPU memory)
-HIDDEN_DIM = 64  # Reduced from 128 to save memory
-NUM_LAYERS = 2
-NUM_HEADS = 4
-DROPOUT = 0.3
-LEARNING_RATE = 1e-3
+# Model hyperparameters (from config.py - tweakable)
+HIDDEN_DIM = MODEL_CONFIG["hidden_dim"]
+NUM_LAYERS = MODEL_CONFIG["num_layers"]
+NUM_HEADS = MODEL_CONFIG["num_heads"]
+DROPOUT = MODEL_CONFIG["dropout"]
+NUM_ENTITY_NODES = MODEL_CONFIG["num_entity_nodes"]
+BATCH_SIZE = MODEL_CONFIG["batch_size"]
+
+# Training hyperparameters (hardcoded - no need to tweak)
+LEARNING_RATE = 5e-4
 WEIGHT_DECAY = 1e-4
-
-# Training hyperparameters
-NUM_EPOCHS = 20
-EARLY_STOPPING_PATIENCE = 5
+NUM_EPOCHS = 25
+EARLY_STOPPING_PATIENCE = 10
 TRAIN_RATIO = 0.8
-
-# Mini-batch settings for memory efficiency
-BATCH_SIZE = 8192  # Process transactions in mini-batches instead of full graph
-USE_MINIBATCH = True  # Enable mini-batch training
-
-# Entity types for embeddings
-ENTITY_TYPES = [
-    "card1", "card2", "card3", "card4", "card5", "card6",
-    "ProductCD", "P_emaildomain", "addr1", "addr2", "dist1"
-]
-NUM_ENTITY_NODES = 1000  # Reduced from 10000 to save memory
+USE_MINIBATCH = True
 
 # ---------------------------------------------------------------------------
 # Model Definition
@@ -562,8 +561,17 @@ def main():
     parser.add_argument("--cpu", action="store_true", help="Force CPU training (useful when GPU memory is insufficient)")
     parser.add_argument("--batch-size", type=int, default=BATCH_SIZE, help="Mini-batch size for training")
     parser.add_argument("--full-graph", action="store_true", help="Use full graph instead of mini-batching")
+    parser.add_argument("--preset", type=str, default="optimized", 
+                        choices=["optimized", "low_memory", "high_capacity"],
+                        help="Configuration preset to use")
     args = parser.parse_args()
 
+    # Print configuration
+    print("=" * 60)
+    print("PJT2 Baseline Model Training")
+    print("=" * 60)
+    print(f"Model: hidden_dim={HIDDEN_DIM}, layers={NUM_LAYERS}, heads={NUM_HEADS}, dropout={DROPOUT}")
+    print(f"Entity nodes: {NUM_ENTITY_NODES:,}, Batch size: {BATCH_SIZE}")
     print("=" * 60)
     print("PJT2 Baseline Model Training (Memory Optimized)")
     print("=" * 60)
@@ -660,25 +668,34 @@ def main():
     best_val_auc = 0.0
     best_epoch = 0
     epochs_without_improvement = 0
+    best_train_auc = 0.0
+    best_train_loss = 0.0
 
     for epoch in range(NUM_EPOCHS):
-        # Train
-        if use_minibatch:
-            train_loss, train_auc = train_epoch_minibatch(
-                model, data, train_idx, optimizer, criterion, device, batch_size
-            )
-            # Validate
-            val_loss, val_auc = evaluate_minibatch(
-                model, data, val_idx, criterion, device, batch_size
-            )
-        else:
-            train_loss, train_auc = train_epoch(
-                model, data, train_idx, optimizer, criterion, device
-            )
-            # Validate
-            val_loss, val_auc = evaluate(
-                model, data, val_idx, criterion, device
-            )
+        try:
+            # Train
+            if use_minibatch:
+                train_loss, train_auc = train_epoch_minibatch(
+                    model, data, train_idx, optimizer, criterion, device, batch_size
+                )
+                # Validate
+                val_loss, val_auc = evaluate_minibatch(
+                    model, data, val_idx, criterion, device, batch_size
+                )
+            else:
+                train_loss, train_auc = train_epoch(
+                    model, data, train_idx, optimizer, criterion, device
+                )
+                # Validate
+                val_loss, val_auc = evaluate(
+                    model, data, val_idx, criterion, device
+                )
+        except Exception as e:
+            print(f"\nERROR at epoch {epoch+1}: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
+            print("Stopping training due to error.")
+            break
 
         # Print progress
         print(f"Epoch {epoch+1:02d}/{NUM_EPOCHS} | "
@@ -686,24 +703,30 @@ def main():
               f"Val Loss: {val_loss:.4f}, AUC: {val_auc:.4f}")
 
         # Early stopping check
+        print(f"           DEBUG: val_auc={val_auc:.4f}, best_val_auc={best_val_auc:.4f}, epochs_without_improvement={epochs_without_improvement}")
         if val_auc > best_val_auc:
             best_val_auc = val_auc
             best_epoch = epoch + 1
             epochs_without_improvement = 0
 
-            # Save best model
+            # Save best model (with train metrics too)
+            best_train_auc = train_auc
+            best_train_loss = train_loss
             torch.save({
                 "epoch": epoch + 1,
                 "model_state_dict": model.state_dict(),
                 "optimizer_state_dict": optimizer.state_dict(),
                 "val_auc": val_auc,
                 "val_loss": val_loss,
+                "train_auc": train_auc,
+                "train_loss": train_loss,
             }, MODEL_OUTPUT_PATH)
             print(f"           -> Best model saved! (val_auc: {val_auc:.4f})")
         else:
             epochs_without_improvement += 1
+            print(f"           DEBUG: After increment, epochs_without_improvement={epochs_without_improvement}, PATIENCE={EARLY_STOPPING_PATIENCE}")
             if epochs_without_improvement >= EARLY_STOPPING_PATIENCE:
-                print(f"\nEarly stopping at epoch {epoch+1}")
+                print(f"\nEarly stopping at epoch {epoch+1} (no improvement for {epochs_without_improvement} epochs)")
                 break
         
         # Memory cleanup between epochs
@@ -739,8 +762,8 @@ def main():
     print("Training Complete!")
     print("=" * 60)
     print(f"Best epoch: {best_epoch}")
-    print(f"Best validation AUC: {final_val_auc:.4f}")
-    print(f"Best validation loss: {final_val_loss:.4f}")
+    print(f"Best Train AUC: {best_train_auc:.4f}, Train Loss: {best_train_loss:.4f}")
+    print(f"Best Val AUC: {final_val_auc:.4f}, Val Loss: {final_val_loss:.4f}")
     print(f"Model saved to: {MODEL_OUTPUT_PATH}")
     print("=" * 60)
 
