@@ -15,7 +15,7 @@ Usage:
 
 MODEL_CONFIG = {
     # Hidden dimension for GNN layers (64-256)
-    "hidden_dim": 96,
+    "hidden_dim": 128,
 
     # Number of GNN message passing layers (2-4)
     "num_layers": 2,
@@ -32,7 +32,7 @@ MODEL_CONFIG = {
 
     # Mini-batch size (512-4096)
     # Smaller = better gradients, less memory per step
-    "batch_size": 4096,
+    "batch_size": 512,
 }
 
 
