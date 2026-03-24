@@ -242,7 +242,8 @@ class SimplifiedFraudDetectorGAT(nn.Module):
         )
 
         # Classifier MLP
-        classifier_input_dim = hidden_dim + hidden_dim * len(ENTITY_TYPES)
+        # GATConv with concat=True outputs hidden_dim * num_heads per entity
+        classifier_input_dim = hidden_dim + (hidden_dim * num_heads * len(ENTITY_TYPES))
         self.classifier = nn.Sequential(
             nn.Linear(classifier_input_dim, hidden_dim),
             nn.ReLU(),

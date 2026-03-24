@@ -21,14 +21,14 @@ MODEL_CONFIG = {
     "num_layers": 2,
 
     # Number of attention heads for GATConv (4-8)
-    "num_heads": 8,
+    "num_heads": 4,
 
     # Dropout rate (0.1-0.4)
     "dropout": 0.3,
 
     # Entity embedding bucket size (1000-100000)
     # Higher = less hash collisions but more memory
-    "num_entity_nodes": 20000,
+    "num_entity_nodes": 10000,
 
     # Mini-batch size (512-4096)
     # Smaller = better gradients, less memory per step
