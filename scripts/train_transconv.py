@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Baseline Model Training for PJT2 Fraud Detection
+TransformerConv Model Training for PJT2 Fraud Detection
 
 Trains a Heterogeneous TransformerConv model on the transaction graph
 with temporal train/validation split.
@@ -8,7 +8,7 @@ with temporal train/validation split.
 Input:  PJT2/data/processed/hetero_graph_with_env.pt
 Output: PJT2/data/processed/best_model.pt
 
-Configuration: All parameters are in scripts/config.py
+Configuration: All parameters are in scripts/config_transconv.py
 """
 
 import os
@@ -25,7 +25,7 @@ from tqdm import tqdm
 
 # Import configuration from config.py
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import MODEL_CONFIG
+from config_transconv import MODEL_CONFIG
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -37,7 +37,7 @@ PROCESSED_DIR = os.path.join(DATA_DIR, "processed")
 GRAPH_PATH = os.path.join(PROCESSED_DIR, "hetero_graph_with_env.pt")
 MODEL_OUTPUT_PATH = os.path.join(PROCESSED_DIR, "best_model.pt")
 
-# Model hyperparameters (from config.py - tweakable)
+# Model hyperparameters (from config_transconv.py - tweakable)
 HIDDEN_DIM = MODEL_CONFIG["hidden_dim"]
 NUM_LAYERS = MODEL_CONFIG["num_layers"]
 NUM_HEADS = MODEL_CONFIG["num_heads"]

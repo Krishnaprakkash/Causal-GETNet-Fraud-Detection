@@ -3,10 +3,10 @@
 Configuration file for PJT2 Fraud Detection Training.
 
 Only includes parameters that should be tweaked between runs.
-All other training parameters are hardcoded in train_baseline.py.
+All other training parameters are hardcoded in train_transconv.py.
 
 Usage:
-    from config import MODEL_CONFIG
+    from config_transconv import MODEL_CONFIG
 """
 
 # =============================================================================
@@ -21,18 +21,18 @@ MODEL_CONFIG = {
     "num_layers": 2,
 
     # Number of attention heads for TransformerConv (4-8)
-    "num_heads": 4,
+    "num_heads": 8,
 
     # Dropout rate (0.1-0.4)
-    "dropout": 0.25,
+    "dropout": 0.3,
 
     # Entity embedding bucket size (1000-100000)
     # Higher = less hash collisions but more memory
-    "num_entity_nodes": 10000,
+    "num_entity_nodes": 20000,
 
     # Mini-batch size (512-4096)
     # Smaller = better gradients, less memory per step
-    "batch_size": 512,
+    "batch_size": 1024,
 }
 
 
