@@ -24,7 +24,7 @@ NUMERICAL_COLS = ["TransactionAmt"]
 CATEGORICAL_COLS = ["ProductCD", "card4", "card6"]
 
 # Hash-based embedding config (cold-start workaround)
-HASH_BUCKET_SIZE = 1000  # Reduced from 10000 to save memory (11 types × 1000 × 128 dim ≈ 5.6MB vs 56MB)
+HASH_BUCKET_SIZE = 1000
 
 FREQ_THRESHOLD = 5
 DIST1_N_BINS = 10
