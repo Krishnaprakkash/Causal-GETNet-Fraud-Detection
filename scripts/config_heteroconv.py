@@ -47,7 +47,7 @@ MODEL_CONFIG = {
 
     # IRM-specific parameters
     # Enable IRM training (default: False for backward compatibility)
-    "use_irm": False,
+    "use_irm": True,
 
     # Penalty weight (lambda) for IRM penalty
     # Range: 1e0 to 1e4, start with 1e2
@@ -59,7 +59,7 @@ MODEL_CONFIG = {
 
     # Which environment to use for IRM
     # Options: "env_time", "env_region", "env_fraud_rate", or "all"
-    "irm_environment": "env_time",
+    "irm_environment": "all",
 }
 
 

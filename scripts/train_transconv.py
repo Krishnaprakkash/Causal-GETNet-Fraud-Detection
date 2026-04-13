@@ -393,7 +393,8 @@ def train_epoch_minibatch(model, data, train_idx, optimizer, criterion, device, 
     """Train for one epoch using mini-batches."""
     model.train()
     
-    # Shuffle training indices
+    # Shuffle tra
+    # ining indices
     num_train = len(train_idx)
     perm = torch.randperm(num_train, device=device)
     train_idx_shuffled = train_idx[perm]
